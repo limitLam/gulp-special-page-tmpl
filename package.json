@@ -1,0 +1,26 @@
+{
+  "name": "gulp-special-page-tmpl",
+  "version": "1.0.0",
+  "description": "专题页模板",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/limitLam/gulp-special-page-tmpl.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/limitLam/gulp-special-page-tmpl/issues"
+  },
+  "homepage": "https://github.com/limitLam/gulp-special-page-tmpl#readme",
+  "devDependencies": {
+    "browserify": "^15.2.0",
+    "gulp": "^3.9.1",
+    "gulp-browserify": "^0.5.1",
+    "gulp-inject": "^4.3.0",
+    "gulp-sass": "^3.1.0"
+  }
+}
