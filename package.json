@@ -18,9 +18,13 @@
   "homepage": "https://github.com/limitLam/gulp-special-page-tmpl#readme",
   "devDependencies": {
     "browserify": "^15.2.0",
+    "del": "^3.0.0",
     "gulp": "^3.9.1",
     "gulp-browserify": "^0.5.1",
+    "gulp-html-beautify": "^1.0.1",
     "gulp-inject": "^4.3.0",
-    "gulp-sass": "^3.1.0"
+    "gulp-rename": "^1.2.2",
+    "gulp-sass": "^3.1.0",
+    "gulp-sequence": "^1.0.0"
   }
 }
