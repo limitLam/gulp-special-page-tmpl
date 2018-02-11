@@ -4,7 +4,8 @@
   "description": "专题页模板",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "gulp dev",
+    "pro": "gulp pro"
   },
   "repository": {
     "type": "git",
@@ -21,12 +22,17 @@
     "del": "^3.0.0",
     "express": "^4.16.2",
     "gulp": "^3.9.1",
+    "gulp-autoprefixer": "^4.1.0",
     "gulp-browserify": "^0.5.1",
     "gulp-html-beautify": "^1.0.1",
     "gulp-inject": "^4.3.0",
     "gulp-rename": "^1.2.2",
+    "gulp-replace": "^0.6.1",
     "gulp-sass": "^3.1.0",
     "gulp-sequence": "^1.0.0",
-    "http-proxy-middleware": "^0.17.4"
+    "gulp-util": "^3.0.8",
+    "gulp-wait": "0.0.2",
+    "http-proxy-middleware": "^0.17.4",
+    "vinyl-ftp": "^0.6.1"
   }
 }

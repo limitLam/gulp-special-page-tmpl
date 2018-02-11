@@ -5,7 +5,13 @@ var inject = require('gulp-inject');
 var rename = require("gulp-rename");
 var htmlbeautify = require('gulp-html-beautify');
 var sequence = require('gulp-sequence');
+var autoprefixer = require("gulp-autoprefixer");
+var replace = require("gulp-replace");
+var wait = require('gulp-wait');
 var del = require('del');
+var ftp = require('vinyl-ftp');
+var gutil = require('gulp-util');
+var config = require('./config');
 
 var path = require("path");
 
@@ -14,6 +20,8 @@ var resolve = path.resolve;
 var srcPath = resolve(__dirname, "src");
 var distPath = resolve(__dirname, "dist");
 var tempPath = resolve(__dirname, "temp");
+
+var cdnPath = config.cdnPath;
 
 //  js编译
 gulp.task("script", function () {
@@ -25,8 +33,13 @@ gulp.task("script", function () {
 //  sass编译
 var compileSass = function (env) {
     return function () {
-        return gulp.src(resolve(srcPath, `style/index.${env}.scss`))
-            .pipe(sass().on("error", sass.logError))
+        return gulp.src(resolve(srcPath, `style/index.scss`))
+            //  sass文件读取兼容
+            .pipe(wait(500))
+            .pipe(sass({
+                includePaths: [resolve(srcPath, 'style')]
+            }).on("error", sass.logError))
+            .pipe(autoprefixer("last 3 versions"))
             .pipe(rename('index.css'))
             .pipe(gulp.dest(tempPath));
     };
@@ -67,7 +80,7 @@ var injectTask = function (env) {
         var sources = [
             resolve(tempPath, 'index.css'),
             resolve(tempPath, 'index.js'),
-            resolve(srcPath, 'html/index.html')
+            resolve(srcPath, 'html/index.html') 
         ];
 
         return gulp.src(resolve(srcPath, `tmpl/index.${env}.html`))
@@ -79,6 +92,7 @@ var injectTask = function (env) {
                     return wrap(ext, file.contents.toString('utf8'));
                 }
             }))
+            .pipe(replace('@CDNPATH', cdnPath[env]))
             .pipe(rename('index.html'))
             .pipe(htmlbeautify({
                 indent_size: 4
@@ -106,7 +120,7 @@ gulp.task('server', function () {
 
 /*--- 源码列表 start ---*/
 var sources = {
-    style: [resolve(srcPath, 'style/**/*'), '!' + resolve(srcPath, 'style/index.pro.scss')],
+    style: resolve(srcPath, 'style/**/*'),
     script: resolve(srcPath, 'script/**/*'),
     html: resolve(srcPath, 'html/index.html'),
     tmpl: resolve(srcPath, 'tmpl/index.dev.html')
@@ -161,6 +175,32 @@ gulp.task('watch:tmpl', function () {
 gulp.task('watch', ['watch:sass', 'watch:script', 'watch:html', 'watch:tmpl']);
 /*--- 监听 end ---*/
 
+/*--- cdn upload start ---*/
+var remotePath = config.proCdn.route;
+
+gulp.task('cdn', function () {
+
+    const conn = ftp.create({
+        host: '61.135.251.132',
+        port: '16321',
+        user: 'gzlinminyi',
+        pass: 'abc123@#',
+        secure: true,
+        secureOptions: {
+            rejectUnauthorized: false
+        },
+        log: gutil.log
+    });
+
+    return gulp.src(resolve(srcPath, "images/**"), {
+            base: `./src/images`,
+            buffer: false
+        })
+        .pipe(conn.newer(remotePath)) // only upload newer files
+        .pipe(conn.dest(remotePath));
+});
+/*--- cdn upload end ---*/
+
 gulp.task('dev', sequence('del:dist', ['script', 'sass:dev'], 'inject:dev', 'server', 'watch'));
 
-gulp.task('pro', sequence('del:dist', ['script', 'sass:pro'], 'inject:pro'));
+gulp.task('pro', sequence('del:dist', ['script', 'sass:pro'], 'inject:pro', 'cdn'));

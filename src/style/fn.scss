@@ -1,0 +1,4 @@
+//  根据cdn获取正确图片地址
+@function path($url) {
+    @return $CDNPATH + '/' + $url;
+}

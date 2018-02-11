@@ -1,9 +1,0 @@
-@import "mixin.scss";
-
-@debug("sass: Current cdnPath is " + $CDNPATH);
-
-ul.plain {
-    color: #444;
-    @include no-bullets;
-    background-image: url($CDNPATH + '123');
-}
