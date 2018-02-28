@@ -1,5 +1,7 @@
 @import './mixin.scss';
 @import './fn.scss';
+// 加载雪碧图文件如果没有雪碧图需要删除掉，以免报错
+@import './sprite.scss';
 [class^="test-head"] {
     width: 100px;
     height: 100px;
@@ -15,4 +17,14 @@
             height: 100%;
         }
     }
+}
+
+.sprite-1{
+    @include sprite-reward-1;
+}
+.sprite-2{
+    @extend .icon-reward-2;
+}
+.sprite-4{
+    @include sprite-reward-4;
 }

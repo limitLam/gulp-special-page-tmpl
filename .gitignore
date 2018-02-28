@@ -5,3 +5,7 @@ dist
 temp
 
 npm-debug.log
+
+sprite.png
+
+sprite.scss

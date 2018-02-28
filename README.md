@@ -13,7 +13,8 @@ http://www.bobo.com/special/specical-tmpl/
 ||---node_modules   //  npm包文件夹  
 ||---src    //  源码目录  
 ||---||---html      //  html文件目录  
-||---||---images    //  图片目录  
+||---||---images    //  图片目录
+||---||---||---icon    //  雪碧图目录  
 ||---||---script    //  脚本目录  
 ||---||---style      //  样式文件目录，用sass  
 ||---||---tmpl //  html模板文件  
@@ -63,3 +64,22 @@ module.exports = {
 
 ## 关于图片cdn
 现在可以直接在css,html或js中写@CDNPATH/{本地images文件夹下的路径}，就可以引用图片了，本地会引用本地的图片，pro会转化会cdn的图片
+
+## 关于雪碧图
+```css
+//  三种用法
+//  注：以下文件名均不包括后缀
+
+//  1.include sprite-{icon目录下的图片名}
+.sprite-1{
+    @include sprite-reward-1;
+}
+
+//  2.extend .icon-{icon目录下的图片名}
+.sprite-2{
+    @extend .icon-reward-2;
+}
+
+//  3.直接使用类名.icon-{icon目录下的图片名}
+<em class="icon-reward-3"></em>
+```

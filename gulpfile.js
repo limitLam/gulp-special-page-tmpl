@@ -12,6 +12,8 @@ var del = require('del');
 var ftp = require('vinyl-ftp');
 var gutil = require('gulp-util');
 var config = require('./config');
+var spritesmith = require('gulp.spritesmith');
+var plumber = require('gulp-plumber');
 
 var path = require("path");
 
@@ -31,23 +33,25 @@ gulp.task("script", function () {
 });
 
 //  sass编译
-var compileSass = function (env) {
-    return function () {
-        return gulp.src(resolve(srcPath, `style/index.scss`))
-            //  sass文件读取兼容
-            .pipe(wait(500))
-            .pipe(sass({
-                includePaths: [resolve(srcPath, 'style')]
-            }).on("error", sass.logError))
-            .pipe(autoprefixer("last 3 versions"))
-            .pipe(rename('index.css'))
-            .pipe(gulp.dest(tempPath));
-    };
+var compileSass = function () {
+    return gulp.src(resolve(srcPath, `style/index.scss`))
+        //  容错处理
+        .pipe(plumber({
+            errorHandler: function(error){
+                this.emit('end');
+            }
+        }))
+        //  sass文件读取兼容
+        .pipe(wait(500))
+        .pipe(sass({
+            includePaths: [resolve(srcPath, 'style')]
+        }).on("error", sass.logError))
+        .pipe(autoprefixer("last 3 versions"))
+        .pipe(rename('index.css'))
+        .pipe(gulp.dest(tempPath));
 }
 
-gulp.task('sass:dev', compileSass('dev'));
-
-gulp.task('sass:pro', compileSass('pro'));
+gulp.task('sass', compileSass);
 
 //  包裹
 var wrap = function (ext, contents) {
@@ -80,7 +84,7 @@ var injectTask = function (env) {
         var sources = [
             resolve(tempPath, 'index.css'),
             resolve(tempPath, 'index.js'),
-            resolve(srcPath, 'html/index.html') 
+            resolve(srcPath, 'html/index.html')
         ];
 
         return gulp.src(resolve(srcPath, `tmpl/index.${env}.html`))
@@ -109,8 +113,16 @@ gulp.task('inject:pro', injectTask('pro'));
 
 //  删除dist目录
 gulp.task('del:dist', function () {
-    del(['dist']);
+    del([distPath]);
 });
+//  删除雪碧图相关文件
+gulp.task('del:sprite', function () {
+    del([
+        resolve(srcPath, "images/sprite.png"),
+        resolve(srcPath, "style/sprite.scss")
+    ]);
+});
+
 
 //  在dist目录启用静态服务器
 gulp.task('server', function () {
@@ -120,7 +132,11 @@ gulp.task('server', function () {
 
 /*--- 源码列表 start ---*/
 var sources = {
-    style: resolve(srcPath, 'style/**/*'),
+    sprite: resolve(srcPath, 'images/icon/**'),
+    style: [
+        resolve(srcPath, 'style/**/*'),
+        '!' + resolve(srcPath, 'style/sprite.scss')
+    ],
     script: resolve(srcPath, 'script/**/*'),
     html: resolve(srcPath, 'html/index.html'),
     tmpl: resolve(srcPath, 'tmpl/index.dev.html')
@@ -128,11 +144,22 @@ var sources = {
 /*--- 源码列表 end ---*/
 
 /*--- 监听 start ---*/
+gulp.task('watch:sprite', function () {
+    return gulp.watch(sources.sprite, {
+        events : 'all'
+    },function (event) {
+        console.log('File ' + event.path + ' was ' + event.type + ', running tasks...');
+        sequence('del:dist', 'del:sprite', 'sprite', 'sass', 'inject:dev')(function () {
+            console.log('Compile Finish.');
+        });
+    });
+});
+
 gulp.task('watch:sass', function () {
     var watcher = gulp.watch(sources.style);
     watcher.on('change', function (event) {
         console.log('File ' + event.path + ' was ' + event.type + ', running tasks...');
-        sequence('del:dist', 'sass:dev', 'inject:dev')(function () {
+        sequence('del:dist', 'sass', 'inject:dev')(function () {
             console.log('Compile Finish.');
         });
     });
@@ -165,14 +192,14 @@ gulp.task('watch:tmpl', function () {
     var watcher = gulp.watch(sources.tmpl);
     watcher.on('change', function (event) {
         console.log('File ' + event.path + ' was ' + event.type + ', running tasks...');
-        sequence('del:dist', 'inject')(function () {
+        sequence('del:dist', 'inject:dev')(function () {
             console.log('Compile Finish.');
         });
     });
     return watcher;
 });
 
-gulp.task('watch', ['watch:sass', 'watch:script', 'watch:html', 'watch:tmpl']);
+gulp.task('watch', ['watch:sprite', 'watch:sass', 'watch:script', 'watch:html', 'watch:tmpl']);
 /*--- 监听 end ---*/
 
 /*--- cdn upload start ---*/
@@ -192,7 +219,10 @@ gulp.task('cdn', function () {
         log: gutil.log
     });
 
-    return gulp.src(resolve(srcPath, "images/**"), {
+    return gulp.src([
+            resolve(srcPath, "images/**"),
+            "!" + resolve(srcPath, "images/icon/"),
+        ], {
             base: `./src/images`,
             buffer: false
         })
@@ -201,6 +231,19 @@ gulp.task('cdn', function () {
 });
 /*--- cdn upload end ---*/
 
-gulp.task('dev', sequence('del:dist', ['script', 'sass:dev'], 'inject:dev', 'server', 'watch'));
+/*--- sprite start ---*/
+gulp.task('sprite', function () {
+    var spriteData = gulp.src(resolve(srcPath, "images/icon/**.png")).pipe(spritesmith({
+        imgName: 'images/sprite.png',
+        cssName: 'style/sprite.scss',
+        imgPath: '@CDNPATH/sprite.png',
+        cssFormat: 'sass_retina',
+        cssTemplate: resolve(srcPath, 'handlebar/sprite.sass.handlebars')
+    }));
+    return spriteData.pipe(gulp.dest(srcPath));
+});
+/*--- sprite end ---*/
 
-gulp.task('pro', sequence('del:dist', ['script', 'sass:pro'], 'inject:pro', 'cdn'));
+gulp.task('dev', sequence('del:dist', 'del:sprite', 'sprite', ['script', 'sass'], 'inject:dev', 'server', 'watch'));
+
+gulp.task('pro', sequence('del:dist', 'del:sprite', 'sprite', ['script', 'sass'], 'inject:pro', 'cdn'));
