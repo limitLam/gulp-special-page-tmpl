@@ -14,6 +14,7 @@ var gutil = require('gulp-util');
 var config = require('./config');
 var spritesmith = require('gulp.spritesmith');
 var plumber = require('gulp-plumber');
+var ejsConcat = require('./src/gulp-plugin/gulp-ejs-concat');
 
 var path = require("path");
 
@@ -37,7 +38,7 @@ var compileSass = function () {
     return gulp.src(resolve(srcPath, `style/index.scss`))
         //  容错处理
         .pipe(plumber({
-            errorHandler: function(error){
+            errorHandler: function (error) {
                 this.emit('end');
             }
         }))
@@ -63,10 +64,8 @@ var wrap = function (ext, contents) {
         case 'js':
             content = '<script>' + contents + '</script>';
             break;
-        case 'html':
-            content = contents;
-            break;
         default:
+            content = contents;
             break;
     }
     // console.log(content);
@@ -79,12 +78,19 @@ var getExt = function (filePath) {
     return splitArr[splitArr.length - 1];
 };
 
+//  获取文件名
+var getFileNameWithoutExt = function (fileName) {
+    var ext = getExt(fileName);
+    return fileName.split(`.${ext}`)[0];
+}
+
 var injectTask = function (env) {
     return function () {
         var sources = [
             resolve(tempPath, 'index.css'),
             resolve(tempPath, 'index.js'),
-            resolve(srcPath, 'html/index.html')
+            resolve(srcPath, 'html/index.html'),
+            resolve(tempPath, 'all.ejs')
         ];
 
         return gulp.src(resolve(srcPath, `tmpl/index.${env}.html`))
@@ -122,7 +128,12 @@ gulp.task('del:sprite', function () {
         resolve(srcPath, "style/sprite.scss")
     ]);
 });
-
+//  删除temp目录
+gulp.task('del:temp', function () {
+    del([tempPath]);
+});
+//  删除全部
+gulp.task('del:all', ['del:dist', 'del:sprite', 'del:temp']);
 
 //  在dist目录启用静态服务器
 gulp.task('server', function () {
@@ -139,15 +150,16 @@ var sources = {
     ],
     script: resolve(srcPath, 'script/**/*'),
     html: resolve(srcPath, 'html/index.html'),
-    tmpl: resolve(srcPath, 'tmpl/index.dev.html')
+    tmpl: resolve(srcPath, 'tmpl/index.dev.html'),
+    ejs: resolve(srcPath, 'ejs/**/*')
 }
 /*--- 源码列表 end ---*/
 
 /*--- 监听 start ---*/
 gulp.task('watch:sprite', function () {
     return gulp.watch(sources.sprite, {
-        events : 'all'
-    },function (event) {
+        events: 'all'
+    }, function (event) {
         console.log('File ' + event.path + ' was ' + event.type + ', running tasks...');
         sequence('del:dist', 'del:sprite', 'sprite', 'sass', 'inject:dev')(function () {
             console.log('Compile Finish.');
@@ -199,7 +211,18 @@ gulp.task('watch:tmpl', function () {
     return watcher;
 });
 
-gulp.task('watch', ['watch:sprite', 'watch:sass', 'watch:script', 'watch:html', 'watch:tmpl']);
+gulp.task('watch:ejs', function () {
+    var watcher = gulp.watch(sources.ejs);
+    watcher.on('change', function (event) {
+        console.log('File ' + event.path + ' was ' + event.type + ', running tasks...');
+        sequence('del:dist', 'ejs', 'inject:dev')(function () {
+            console.log('Compile Finish.');
+        });
+    });
+    return watcher;
+});
+
+gulp.task('watch', ['watch:sprite', 'watch:sass', 'watch:script', 'watch:html', 'watch:tmpl', 'watch:ejs']);
 /*--- 监听 end ---*/
 
 /*--- cdn upload start ---*/
@@ -244,6 +267,22 @@ gulp.task('sprite', function () {
 });
 /*--- sprite end ---*/
 
-gulp.task('dev', sequence('del:dist', 'del:sprite', 'sprite', ['script', 'sass'], 'inject:dev', 'server', 'watch'));
+/*--- ejs start ---*/
+gulp.task('ejs', function () {
+    gulp.src(resolve(srcPath, 'ejs/**/*.ejs'))
+        .pipe(ejsConcat('all.ejs', {
+            transform: function (fileName, fileContents) {
+                return `
+                    <script id="ejs-${getFileNameWithoutExt(fileName)}" type="text/template">
+                        ${fileContents}
+                    </script>
+                `;
+            }
+        }))
+        .pipe(gulp.dest(tempPath));
+});
+/*--- ejs end ---*/
 
-gulp.task('pro', sequence('del:dist', 'del:sprite', 'sprite', ['script', 'sass'], 'inject:pro', 'cdn'));
+gulp.task('dev', sequence('del:all', 'sprite', ['script', 'sass', 'ejs'], 'inject:dev', 'server', 'watch'));
+
+gulp.task('pro', sequence('del:all', 'sprite', ['script', 'sass', 'ejs'], 'inject:pro', 'cdn'));

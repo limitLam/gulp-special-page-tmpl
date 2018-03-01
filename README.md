@@ -12,6 +12,8 @@ http://www.bobo.com/special/specical-tmpl/
 ||---dist   //  build目录，pro生成html文件内容可以直接放到cms上  
 ||---node_modules   //  npm包文件夹  
 ||---src    //  源码目录  
+||---||---ejs       //  ejs文件目录
+||---||---handlebar //  handlebar目录
 ||---||---html      //  html文件目录  
 ||---||---images    //  图片目录
 ||---||---||---icon    //  雪碧图目录  
@@ -82,4 +84,14 @@ module.exports = {
 
 //  3.直接使用类名.icon-{icon目录下的图片名}
 <em class="icon-reward-3"></em>
+```
+
+## 关于ejs
+```javascript
+//  引入ejs模板，通过id为ejs-{ejs目录下的文件名,没有后缀}的js模板引入
+var tmpl = jQuery("#ejs-test").html();
+
+//  使用ejs，html为渲染出来的字符串，data为参数对象
+//  html中已经引入_.template，可以直接全局使用
+var html = _.template(tmpl)(data);
 ```

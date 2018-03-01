@@ -19,7 +19,9 @@
   "homepage": "https://github.com/limitLam/gulp-special-page-tmpl#readme",
   "devDependencies": {
     "browserify": "^15.2.0",
+    "concat-with-sourcemaps": "^1.0.5",
     "del": "^3.0.0",
+    "ejsify": "^1.0.0",
     "express": "^4.16.2",
     "gulp": "^3.9.1",
     "gulp-autoprefixer": "^4.1.0",
@@ -35,6 +37,8 @@
     "gulp-wait": "0.0.2",
     "gulp.spritesmith": "^6.9.0",
     "http-proxy-middleware": "^0.17.4",
+    "through2": "^2.0.3",
+    "vinyl": "^2.1.0",
     "vinyl-ftp": "^0.6.1"
   }
 }
