@@ -143,15 +143,15 @@ gulp.task('server', function () {
 
 /*--- 源码列表 start ---*/
 var sources = {
-    sprite: resolve(srcPath, 'images/icon/**'),
+    sprite: 'src/images/icon/**',
     style: [
-        resolve(srcPath, 'style/**/*'),
-        '!' + resolve(srcPath, 'style/sprite.scss')
+        'src/style/**/*',
+        '!src/style/sprite.scss'
     ],
-    script: resolve(srcPath, 'script/**/*'),
-    html: resolve(srcPath, 'html/index.html'),
-    tmpl: resolve(srcPath, 'tmpl/index.dev.html'),
-    ejs: resolve(srcPath, 'ejs/**/*')
+    script: 'src/script/**/*',
+    html: 'src/html/index.html',
+    tmpl: 'src/tmpl/index.dev.html',
+    ejs: 'src/ejs/**/*.ejs'
 }
 /*--- 源码列表 end ---*/
 
@@ -212,14 +212,21 @@ gulp.task('watch:tmpl', function () {
 });
 
 gulp.task('watch:ejs', function () {
-    var watcher = gulp.watch(sources.ejs);
-    watcher.on('change', function (event) {
+    // var watcher = gulp.watch(sources.ejs);
+    // watcher.on('change', function (event) {
+    //     console.log('File ' + event.path + ' was ' + event.type + ', running tasks...');
+    //     sequence('del:dist', 'ejs', 'inject:dev')(function () {
+    //         console.log('Compile Finish.');
+    //     });
+    // });
+    // return watcher;
+
+    return gulp.watch(sources.ejs, function (event) {
         console.log('File ' + event.path + ' was ' + event.type + ', running tasks...');
         sequence('del:dist', 'ejs', 'inject:dev')(function () {
             console.log('Compile Finish.');
         });
     });
-    return watcher;
 });
 
 gulp.task('watch', ['watch:sprite', 'watch:sass', 'watch:script', 'watch:html', 'watch:tmpl', 'watch:ejs']);
@@ -269,7 +276,7 @@ gulp.task('sprite', function () {
 
 /*--- ejs start ---*/
 gulp.task('ejs', function () {
-    gulp.src(resolve(srcPath, 'ejs/**/*.ejs'))
+    return gulp.src(resolve(srcPath, 'ejs/**/*.ejs'))
         .pipe(ejsConcat('all.ejs', {
             transform: function (fileName, fileContents) {
                 return `

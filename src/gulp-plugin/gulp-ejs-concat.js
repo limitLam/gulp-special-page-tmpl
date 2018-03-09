@@ -29,7 +29,7 @@ module.exports = function (file, opt) {
     } else if (typeof file.path === 'string') {
         fileName = path.basename(file.path);
     } else {
-        throw new Error('gulp-concat: Missing path in file options');
+        throw new Error('gulp-ejs-concat: Missing path in file options');
     }
 
     function bufferContents(file, enc, cb) {
@@ -41,7 +41,7 @@ module.exports = function (file, opt) {
 
         // we don't do streams (yet)
         if (file.isStream()) {
-            this.emit('error', new Error('gulp-concat: Streaming not supported'));
+            this.emit('error', new Error('gulp-ejs-concat: Streaming not supported'));
             cb();
             return;
         }
